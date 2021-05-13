@@ -1,0 +1,1 @@
+web: streamlit run PRUEBA-Proyecto_Streamlit
