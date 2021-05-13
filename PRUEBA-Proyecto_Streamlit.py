@@ -27,7 +27,9 @@ expander_bar.markdown("""
 """)
 
 materiales = pd.read_csv('materiales.csv')
-
+materiales.dropna(subset=['CODIGO JDE'],inplace=True)
+materiales['CODIGO JDE']=materiales['CODIGO JDE'].astype('int')
+materiales['PROG']=materiales['PROG'].astype('str')
 
 # ----------SE CARGAN LOS MATERIALES QUE SE ENCUENTRAN EN BODEGA, AÑADIR FILTROS
 inventario = pd.read_csv('inventario.csv')
