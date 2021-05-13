@@ -21,9 +21,7 @@ st.write("""
 # About
 expander_bar = st.beta_expander("About")
 expander_bar.markdown("""
-* **Python libraries:** base64, pandas, streamlit, numpy, matplotlib, seaborn, BeautifulSoup, requests, json, time
-* **Data source:** [CoinMarketCap](http://coinmarketcap.com).
-* **Credit:** Web scraper adapted from the Medium article *[Web Scraping Crypto Prices With Python](https://towardsdatascience.com/web-scraping-crypto-prices-with-python-41072ea5b5bf)* written by [Bryan Feng](https://medium.com/@bryanf).
+SE PUEDE PONER INFORMACION DE INTERES
 """)
 
 materiales = pd.read_csv('materiales.csv')
@@ -94,5 +92,3 @@ col1.plotly_chart(fig)
 col2.dataframe (Total_Historico)
 Hist=cantidades_total.groupby('PROG',as_index=False).CANTIDAD.sum()
 fig2 = px.bar(Hist, x='PROG', y='CANTIDAD',title="Historico pedidos",labels={'PROG':'Año','CANTIDAD':'cantidad total'})
-col2.plotly_chart(fig2)
-#data_precio_2019 = pd.read_excel('MATERIALES_PRACTICA.xlsx',sheet_name='2019',usecols=['CODIGO','NOMBRE','CANTIDAD','TOTAL','NODO','ZONA','MUNICIPIO','PROG'])
