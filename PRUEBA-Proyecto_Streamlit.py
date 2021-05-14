@@ -45,7 +45,7 @@ consolidado.loc[consolidado['MUNICIPIO']=='SANTA ROSA', 'MUNICIPIO']='SANTA ROSA
 
 #----------------evaluar el inventario con respecto a las necesidades --------------
 Sorted_Nodos = sorted(consolidado.NODO.unique())
-sequence = st.multiselect('Nodos', Sorted_Nodos,default = ['W35714'])
+sequence = st.multiselect('Nodos', Sorted_Nodos,default = ['W35714','E31280','O21292'])
 cantidades = consolidado[consolidado.NODO.isin(sequence)]
 #Filtro por código-------------------------------
 Sorted_Codigos = sorted(cantidades['CODIGO JDE'].unique())
