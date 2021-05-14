@@ -54,7 +54,7 @@ all = st.sidebar.checkbox("Select all")
 if all:
     selected_options = container.multiselect('Codigos', Sorted_Codigos, Sorted_Codigos)
 else:
-    selected_options =  container.multiselect('Codigos', Sorted_Codigos)
+    selected_options =  container.multiselect('Codigos', Sorted_Codigos,Sorted_Codigos)
 cantidades=cantidades[cantidades['CODIGO JDE'].isin(selected_options)]
 
 cantidades_total=consolidado[consolidado.NODO.isin(sequence)]
