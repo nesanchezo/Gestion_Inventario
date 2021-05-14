@@ -17,16 +17,17 @@ st.write("""
 # ***Planeación Materiales Expansión y Reposición ***!
 """)
 
+
 #---------------------------------#
 # About
 expander_bar = st.beta_expander("About")
 expander_bar.markdown("""
-SE PUEDE PONER INFORMACION DE INTERES
+* **Python libraries:** base64, pandas, streamlit, numpy, matplotlib, seaborn, BeautifulSoup, requests, json, time
+* **Data source:** [CoinMarketCap](http://coinmarketcap.com).
+* **Credit:** Web scraper adapted from the Medium article *[Web Scraping Crypto Prices With Python](https://towardsdatascience.com/web-scraping-crypto-prices-with-python-41072ea5b5bf)* written by [Bryan Feng](https://medium.com/@bryanf).
 """)
 
 materiales = pd.read_csv('materiales.csv')
-materiales.dropna(subset=['CODIGO JDE'],inplace=True)
-materiales['CODIGO JDE']=materiales['CODIGO JDE'].astype('int')
 materiales['PROG']=materiales['PROG'].astype('str')
 
 # ----------SE CARGAN LOS MATERIALES QUE SE ENCUENTRAN EN BODEGA, AÑADIR FILTROS
@@ -43,17 +44,24 @@ consolidado.loc[consolidado['MUNICIPIO']=='VILLA MARIA', 'MUNICIPIO']='VILLAMARI
 consolidado.loc[consolidado['MUNICIPIO']=='SANTA ROSA', 'MUNICIPIO']='SANTA ROSA DE CABAL'
 
 #----------------evaluar el inventario con respecto a las necesidades --------------
-#se solicitan los nodos a revisar
-sequence_input = 'N43041,N43033'
 Sorted_Nodos = sorted(consolidado.NODO.unique())
-sequence = st.text_input('Nodos', sequence_input)
-sequence = sequence.split(',')
-
+sequence = st.multiselect('Nodos', Sorted_Nodos,default = ['W35714'])
 cantidades = consolidado[consolidado.NODO.isin(sequence)]
-#cantidades2=cantidades[(cantidades.PROG==2019) | (cantidades.PROG==2020)]
+#Filtro por código-------------------------------
+Sorted_Codigos = sorted(cantidades['CODIGO JDE'].unique())
+container = st.sidebar.beta_container()
+all = st.sidebar.checkbox("Select all") 
+if all:
+    selected_options = container.multiselect('Codigos', Sorted_Codigos, Sorted_Codigos)
+else:
+    selected_options =  container.multiselect('Codigos', Sorted_Codigos)
+cantidades=cantidades[cantidades['CODIGO JDE'].isin(selected_options)]
+
 cantidades_total=consolidado[consolidado.NODO.isin(sequence)]
+cantidades_total=cantidades_total[cantidades_total['CODIGO JDE'].isin(selected_options)]
 Total_Historico=pd.pivot_table(cantidades_total,values='CANTIDAD',index=['CODIGO JDE'],columns=['PROG'],aggfunc=np.sum,fill_value=0)
 cantidades=cantidades[cantidades.PROG=='2021']
+
 cantidades_pedido=cantidades.groupby(['CODIGO JDE','NOMBRE','UNIDAD'],as_index=False)[['CANTIDAD','SALDO EN INVENTARIO']].sum()
 cantidades_pedido['FALTANTE']=cantidades_pedido['CANTIDAD']-cantidades_pedido['SALDO EN INVENTARIO']
 cantidades_pedido['solicitar']=[x*1.1 if x>0 else 0 for x in cantidades_pedido['FALTANTE']]
@@ -79,17 +87,20 @@ data=pd.DataFrame(municipios,columns=['MUNICIPIO'])
 df2=data.merge(df,how='left',on='MUNICIPIO')
 df2=df2.fillna(0)
 
-col1, col2 = st.beta_columns(2)
+st.write('Cantidad de material:')
+col1, col2 ,col3 = st.beta_columns((1,1,2))
 
-col1.dataframe (df)
+col2.dataframe (df)
+col1.dataframe (Total_Historico)
 #-----------------------MAPA choroplet que muestra la cantidad de material necesario por municipio ---------------------
-col1.header('Map')
-fig = px.choropleth(df2, geojson=geojson, color="NODO",locations="MUNICIPIO", featureidkey="properties.MPIO_CNMBR",projection="mercator",hover_data=['MUNICIPIO'])
+#col2.header('Map')
+fig = px.choropleth(df2, geojson=geojson, color="NODO",locations="MUNICIPIO", featureidkey="properties.MPIO_CNMBR",projection="mercator",hover_data=['MUNICIPIO'],color_continuous_scale=px.colors.sequential.Greens)
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-col1.plotly_chart(fig)
+col3.plotly_chart(fig)
 #-----------------------MAPA choroplet que muestra los Nodos por municipio ---------------------
-col2.dataframe (Total_Historico)
-Hist=cantidades_total.groupby('PROG',as_index=False).CANTIDAD.sum()
-fig2 = px.bar(Hist, x='PROG', y='CANTIDAD',title="Historico pedidos",labels={'PROG':'Año','CANTIDAD':'cantidad total'})
-col2.plotly_chart(fig2)
+st.write('Historico de la cantidad total de material solicitado por código')
+Hist=cantidades_total.groupby(['PROG','CODIGO JDE'],as_index=False).CANTIDAD.sum()
+Hist['CODIGO JDE']=Hist['CODIGO JDE'].astype('str')
+fig2 = px.bar(Hist, x='CODIGO JDE', y='CANTIDAD',color='PROG',barmode="group",title="Historico pedidos",labels={'PROG':'Año','CANTIDAD':'cantidad total'}, color_discrete_sequence=px.colors.qualitative.G10)
+st.plotly_chart(fig2,use_container_width=True)
