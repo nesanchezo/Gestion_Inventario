@@ -71,6 +71,7 @@ Total=Total.rename(columns={'SALDO EN INVENTARIO':'Inventario','disponible inven
 
 Total=Total.round(2)
 st.write('Data Dimension: ' + str(Total.shape[0]) + ' rows and ' + str(Total.shape[1]) + ' columns.')
+st.write('Cantidad de material:')
 st.dataframe (Total)
 
 def to_excel(df):
