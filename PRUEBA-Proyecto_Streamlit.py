@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import base64
+from io import BytesIO
 import geopandas as gdp
 import json
 import matplotlib.pyplot as plt
@@ -15,16 +17,6 @@ st.set_page_config(layout="wide")
 
 st.write("""
 # ***Planeación Materiales Expansión y Reposición ***!
-""")
-
-
-#---------------------------------#
-# About
-expander_bar = st.beta_expander("About")
-expander_bar.markdown("""
-* **Python libraries:** base64, pandas, streamlit, numpy, matplotlib, seaborn, BeautifulSoup, requests, json, time
-* **Data source:** [CoinMarketCap](http://coinmarketcap.com).
-* **Credit:** Web scraper adapted from the Medium article *[Web Scraping Crypto Prices With Python](https://towardsdatascience.com/web-scraping-crypto-prices-with-python-41072ea5b5bf)* written by [Bryan Feng](https://medium.com/@bryanf).
 """)
 
 materiales = pd.read_csv('materiales.csv')
@@ -60,6 +52,8 @@ cantidades=cantidades[cantidades['CODIGO JDE'].isin(selected_options)]
 cantidades_total=consolidado[consolidado.NODO.isin(sequence)]
 cantidades_total=cantidades_total[cantidades_total['CODIGO JDE'].isin(selected_options)]
 Total_Historico=pd.pivot_table(cantidades_total,values='CANTIDAD',index=['CODIGO JDE'],columns=['PROG'],aggfunc=np.sum,fill_value=0)
+Total_Historico['Prom']=Total_Historico.mean(axis=1)
+Total_Historico['Prom']=Total_Historico.Prom.round()
 cantidades=cantidades[cantidades.PROG=='2021']
 
 cantidades_pedido=cantidades.groupby(['CODIGO JDE','NOMBRE','UNIDAD'],as_index=False)[['CANTIDAD','SALDO EN INVENTARIO']].sum()
@@ -79,25 +73,48 @@ Total=Total.round(2)
 st.write('Data Dimension: ' + str(Total.shape[0]) + ' rows and ' + str(Total.shape[1]) + ' columns.')
 st.dataframe (Total)
 
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
+def get_table_download_link(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+    val = to_excel(df)
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="extract.xlsx">Descargar</a>' # decode b'abc' => abc
+
+df = Total # your dataframe
+st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+
 with open('mapa.geojson') as file:
 		geojson=json.load(file)
-df=cantidades.groupby(['MUNICIPIO'],as_index=False).NODO.nunique()
+df_map=cantidades.groupby(['MUNICIPIO'],as_index=False).NODO.nunique()
 municipios=consolidado['MUNICIPIO'].unique()
 data=pd.DataFrame(municipios,columns=['MUNICIPIO'])
-df2=data.merge(df,how='left',on='MUNICIPIO')
-df2=df2.fillna(0)
+df2_map=data.merge(df_map,how='left',on='MUNICIPIO')
+df2_map=df2_map.fillna(0)
 
-st.write('Cantidad de material:')
-col1, col2 ,col3 = st.beta_columns((1,1,2))
+st.write('Historico de cantidad de material:')
+col1, col2 = st.beta_columns((0.8,1.2))
 
-col2.dataframe (df)
 col1.dataframe (Total_Historico)
+df = Total_Historico # your dataframe
+st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+
+col1.dataframe (df_map)
 #-----------------------MAPA choroplet que muestra la cantidad de material necesario por municipio ---------------------
 #col2.header('Map')
-fig = px.choropleth(df2, geojson=geojson, color="NODO",locations="MUNICIPIO", featureidkey="properties.MPIO_CNMBR",projection="mercator",hover_data=['MUNICIPIO'],color_continuous_scale=px.colors.sequential.Greens)
+fig = px.choropleth(df2_map, geojson=geojson, color="NODO",locations="MUNICIPIO", featureidkey="properties.MPIO_CNMBR",projection="mercator",hover_data=['MUNICIPIO'],color_continuous_scale=px.colors.sequential.Greens)
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-col3.plotly_chart(fig)
+col2.plotly_chart(fig)
 #-----------------------MAPA choroplet que muestra los Nodos por municipio ---------------------
 st.write('Historico de la cantidad total de material solicitado por código')
 Hist=cantidades_total.groupby(['PROG','CODIGO JDE'],as_index=False).CANTIDAD.sum()
