@@ -48,14 +48,14 @@ if all:
 else:
     selected_options =  container.multiselect('Codigos', Sorted_Codigos,Sorted_Codigos)
 cantidades=cantidades[cantidades['CODIGO JDE'].isin(selected_options)]
-
-cantidades_total=consolidado[consolidado.NODO.isin(sequence)]
+#--------------HISTORICO----------------------------------------------------
+cantidades_total=consolidado#[consolidado.NODO.isin(sequence)]
 cantidades_total=cantidades_total[cantidades_total['CODIGO JDE'].isin(selected_options)]
 Total_Historico=pd.pivot_table(cantidades_total,values='CANTIDAD',index=['CODIGO JDE'],columns=['PROG'],aggfunc=np.sum,fill_value=0)
 Total_Historico['Prom']=Total_Historico.mean(axis=1)
 Total_Historico['Prom']=Total_Historico.Prom.round()
+#--------------Materiales 2021 (primera tabla)-----------------
 cantidades=cantidades[cantidades.PROG=='2021']
-
 cantidades_pedido=cantidades.groupby(['CODIGO JDE','NOMBRE','UNIDAD'],as_index=False)[['CANTIDAD','SALDO EN INVENTARIO']].sum()
 cantidades_pedido['FALTANTE']=cantidades_pedido['CANTIDAD']-cantidades_pedido['SALDO EN INVENTARIO']
 cantidades_pedido['solicitar']=[x*1.1 if x>0 else 0 for x in cantidades_pedido['FALTANTE']]
