@@ -54,6 +54,7 @@ cantidades_total=cantidades_total[cantidades_total['CODIGO JDE'].isin(selected_o
 Total_Historico=pd.pivot_table(cantidades_total,values='CANTIDAD',index=['CODIGO JDE'],columns=['PROG'],aggfunc=np.sum,fill_value=0)
 Total_Historico['Prom']=Total_Historico.mean(axis=1)
 Total_Historico['Prom']=Total_Historico.Prom.round()
+Total_Historico['Std']=Total_Historico.std(axis=1)
 #--------------Materiales 2021 (primera tabla)-----------------
 cantidades=cantidades[cantidades.PROG=='2021']
 cantidades_pedido=cantidades.groupby(['CODIGO JDE','NOMBRE','UNIDAD'],as_index=False)[['CANTIDAD','SALDO EN INVENTARIO']].sum()
